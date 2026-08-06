@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ichiza-docs",
+  "compatibility_date": "2026-08-06",
+  "assets": {
+    "directory": "./build",
+    "not_found_handling": "404-page"
+  },
+  // workers.dev での動作確認後、custom domain 切替時に workers_dev: false + routes を有効化する
+  "workers_dev": true,
+  // "workers_dev": false,
+  // "routes": [{ "pattern": "ichiza.grimoh.net", "custom_domain": true }],
+  "observability": { "enabled": true }
+}
