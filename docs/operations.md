@@ -5,7 +5,7 @@ title: 運営サイクルガイド
 
 # 運営サイクルガイド
 
-旗揚げから振り返りまでの運用の型です。目指す状態は
+イベント作成から振り返りまでの運用の型です。目指す状態は
 **「毎朝の Slack リマインドと Issue の消化だけで開催日を迎える」**こと。
 時期は同梱の [lifecycle テンプレート](./ichiza/lifecycle.md)（最小構成）に基づきます。
 
@@ -13,12 +13,12 @@ title: 運営サイクルガイド
 
 | 時期 | やること | ichiza の関与 |
 | --- | --- | --- |
-| −5 週 | 旗揚げ → PR の `event.yaml` に会場・役割を記入してマージ | `ichiza new`（Run workflow） |
-| −5〜−4 週 | 会場確保、イベントページ公開、登壇者へ Issue Form リンク送付 | 期限つき Issues が発行済み |
-| −4〜−3 週 | 登壇者情報の回収 → イベントページ掲載文に反映 | `ichiza speakers` で Issue Form → 掲載文生成、`--apply` で `event.yaml` にも反映 |
+| −5 週 | イベント作成 → PR の `event.yaml` に会場・役割を記入してマージ | `ichiza new`（Run workflow） |
+| −5〜−4 週 | 会場確保、募集ページ公開（job summary の本文をペースト）→ `connpass_url` を追記、登壇依頼 | `ichiza new` が募集ページ本文まで生成 |
+| −4〜−3 週 | 登壇者情報を `event.yaml` の `speakers:` に追記 → 募集ページ本文を再生成して貼り直し | `ichiza registry`（Run workflow） |
 | −3 週 | SNS・コミュニティで告知 | remind の X intent URL からワンタップ投稿 |
 | −2 週 | 配信枠作成（hybrid / online のみ） | mode に応じて自動展開されたタスク |
-| −1 週 | 参加者数の最終確認 | 同上 |
+| −1 週 | 参加者数の最終確認 | `ichiza watch` が毎朝の申込数 / 補欠 / 受付状態を通知 |
 | −3 日 | 配信リハーサル、直前リマインド | remind が締切接近を毎朝通知 |
 | 当日 | → 実施 | — |
 | +1〜+10 日 | → 振り返り | `followup` ラベルの Issues |
@@ -27,7 +27,9 @@ title: 運営サイクルガイド
 
 - 毎朝 9:00 JST の Slack digest が「今週の締切」を運ぶ — **記憶コストはシステム側にある**
 - 共同運営者にはリポジトリの Write 権限を渡せば、Run workflow ボタンと Issue 消化だけで参加できる
-- タスク完了は **GitHub Issue の close で表現**する（`tasks.yaml` の done とはまだ連動しないため、open Issue を正とする）
+- タスク完了は **GitHub Issue を閉じるだけ**で表現する。remind が close 済み Issue を照合して
+  翌朝から対象外にする（ただし Issue のタイトルを変更すると照合できなくなる）
+- やらないと決めたタスクは、Issue を閉じるか `events/<slug>/tasks.yaml` の該当行を削除してコミット
 
 ## 実施（当日）
 
@@ -60,7 +62,7 @@ Issue を立てておくと、振り返り（KPT）の一次ソースになり�
 
 振り返りの出口は 2 つです。
 
-- **運営の改善** → `templates/lifecycle.yaml` に反映（タスク追加・期限調整・役割変更）。次回の旗揚げから自動で効く
+- **運営の改善** → `templates/lifecycle.yaml` に反映（タスク追加・期限調整・役割変更）。次回のイベント作成から自動で効く
 - **ツールの改善** → [`gr1m0h/ichiza`](https://github.com/gr1m0h/ichiza/issues) に Issue を積む
 
 マイルストーンの全 Issue が close されたら、そのイベントは完走です。
@@ -72,7 +74,7 @@ Issue を立てておくと、振り返り（KPT）の一次ソースになり�
 | 気づきの種類 | 行き先 | 例 |
 | --- | --- | --- |
 | タスクの過不足・期限のズレ | 運営リポジトリの `templates/lifecycle.yaml` を直接編集 | 「会場確保は -35d では遅い」→ `-45d` に変更 |
-| 手作業が残っている定型作業 | `gr1m0h/ichiza` に機能 Issue | 「イベントページ作成が手動」→ registry adapter |
+| 手作業が残っている定型作業 | `gr1m0h/ichiza` に機能 Issue | 「告知記事の下書きが手動」→ `ichiza draft` |
 | ichiza の不具合・使いにくさ | `gr1m0h/ichiza` にバグ Issue | 「remind の digest に close 済みタスクが混ざる」等 |
 
 本体側の改善はタグ付け → `v0` 付け替えで配信されるため、

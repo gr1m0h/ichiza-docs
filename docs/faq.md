@@ -5,35 +5,55 @@ title: FAQ
 
 # FAQ
 
-## 旗揚げ workflow が Issue 作成で失敗する
-
-`ichiza new --issues` は `gh issue create --label ...` を実行しますが、
-gh は**リポジトリに存在しないラベルを指定するとエラーで止まります**。
-`lifecycle.yaml` で使う全ラベルを先に作成してください
-（[Getting Started](./getting-started.md#3-1-ラベルの事前作成必須)）。
-
-## 旗揚げ workflow の PR 作成が 403 で失敗する
+## イベント作成 workflow は成功したのに PR がない
 
 Settings → Actions → General → Workflow permissions の
 **「Allow GitHub Actions to create and approve pull requests」が OFF** になっています。
-workflow 側の `permissions:` 宣言だけでは足りません。
+workflow は失敗せず、job summary に PR の手動作成リンク（タイトル・本文入力済み）が
+出ています。恒久対応は権限を ON にすることです
+（[Getting Started](./getting-started.md#2-1-actions-の-pr-作成許可推奨)）。
+
+## リマインドが来ない
+
+`SLACK_WEBHOOK_URL` secret を確認してください。対象タスクがゼロの日は通知なしです。
+
+## 申込数の通知が来ない
+
+`CONNPASS_API_KEY` secret と、対象イベントの `event.yaml` に `connpass_url` が
+入っているかを確認してください（watch の実行ログに状況が出ます）。
+公開中のイベントが 1 件もない間は、cron は動いていても Slack 通知は自動で休止します。
 
 ## 生成された時点で期限切れのタスクが並ぶ
 
 開催日が近すぎます。同梱 lifecycle の最長オフセットは `-35d`（会場確定・確保）なので、
-**開催日は旗揚げ日から 5 週間以上先**に置いてください。
+**開催日はイベント作成日から 5 週間以上先**に置いてください。
 自分の lifecycle をカスタマイズしている場合は、その最長オフセットが基準です。
 
-## Issue を close しても tasks.yaml の done が変わらない
+## タスクの完了はどう表現する？
 
-現状 `tasks.yaml` の done と GitHub Issue の close は連動しません。
-**open Issue を正とする**運用にしてください（タスク完了 = Issue close）。
-同期の実装は Roadmap の最優先項目です。
+**終わったタスクは Issue を閉じるだけ**です。remind が close 済み Issue を gh 経由で
+照合し、翌朝のリマインドから外れます。`tasks.yaml` は「何をいつまでに」の定義のみで
+完了状態を持ちません。
+
+注意: Issue のタイトルを変更すると照合できなくなります。やらないと決めたタスクは、
+Issue を閉じるか `events/<slug>/tasks.yaml` の該当行を削除してコミットしてください。
+
+## `invalid slug` で失敗する
+
+slug は小文字英数字とハイフンのみです（例: `tokyo-1`）。
+
+## 登壇者を追加したら募集ページはどう更新する？
+
+1. `events/<slug>/event.yaml` の `speakers:` に登壇者情報を追記
+2. Actions タブ → **ichiza registry** → Run workflow（slug を入力）
+3. summary に出た本文を、公開済みの connpass ページの本文に**まるごと貼り直す**
+
+タイムテーブルや会場の変更も同じ流れです（[運営サイクルガイド](./operations.md)）。
 
 ## 共同運営者に CLI のインストールは必要？
 
 不要です。運営リポジトリの Write 権限があれば、
-**Run workflow ボタン（旗揚げ）と Issue の消化**だけで運営に参加できます。
+**Run workflow ボタン（イベント作成）と Issue の消化**だけで運営に参加できます。
 スマホの GitHub アプリからも実行可能です。CLI は Actions とローカルで
 同じロジックを呼ぶための実装形態にすぎません。
 
@@ -50,10 +70,9 @@ API 経由の全自動投稿（`mode: api`）は未実装です。
 
 ## Roadmap {#roadmap}
 
-| 優先 | 項目 | 理由 |
-| --- | --- | --- |
-| 1 | タスク完了の同期 | `tasks.yaml` の done と Issue close の連動。「open Issue を正とする」方針を実装に落として二重管理を回避 |
-| 2 | `ichiza watch` | connpass API v2 で申込数ウォッチ（adapter 化して他サービス対応） |
-| 3 | `ichiza draft` / `ichiza kpt` | 告知記事・開催記事・司会資料の下書き、アンケート集計 → KPT 下書き |
-| 4 | GoReleaser + setup のバイナリ化 | workflow 実行時間の短縮（現状は毎回 `go install`） |
-| 5 | starter への Renovate 設定同梱 | `@v0` タグ追従の実体となる `renovate.json` 例の同梱 |
+未実装の機能のみ載せています。
+
+| 項目 | 内容 |
+| --- | --- |
+| `ichiza draft` | 告知記事・開催記事・司会資料の下書き生成 |
+| `ichiza kpt` | アンケート集計 → KPT 下書き |
