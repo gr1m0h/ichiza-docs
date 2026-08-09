@@ -17,7 +17,8 @@ ichiza は「インストールする CLI」ではなく「導入する GitHub A
 2. 生成されたリポジトリには workflows / `ichiza.yaml` / 募集ページテンプレートが配線済み
 3. イベント作成は GitHub UI の **Run workflow ボタン**から
    （スマホの GitHub アプリからも実行可能 — CLI 知識ゼロの共同運営者でも使える）
-4. バージョンは `gr1m0h/ichiza/actions/*@v0` のタグ参照で固定し、Renovate で追従
+4. バージョンは `gr1m0h/ichiza/actions/*@v0` のタグ参照。本体のリリース
+   （`v0` タグの付け替え）に、運営リポジトリ側の変更なしで追従
 
 ```text
 gr1m0h/ichiza          # 本体: CLI + composite actions
