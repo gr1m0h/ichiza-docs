@@ -65,8 +65,10 @@ tasks:
 
 lifecycle は設定（`ichiza.yaml`）ではなくイベント作成のたびに展開される**テンプレート**なので、
 `templates/` 配下に用途別に複数置けます（例: 通常回と LT 大会）。
-`ichiza new --lifecycle templates/lt-night.yaml`、または Run workflow の
-`lifecycle` 入力で切り替えます。
+切り替えは `ichiza new --lifecycle templates/lt-night.yaml`。GitHub Actions では
+composite action（`actions/new`）に `lifecycle` input がありますが、starter の
+`ichiza-new.yml` はフォーム入力に含めていないため、使う場合は workflow に
+input を追加して `actions/new` へ渡してください。
 
 ## テンプレートを育てる
 
