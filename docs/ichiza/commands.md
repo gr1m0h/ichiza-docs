@@ -61,6 +61,7 @@ ichiza remind --today 2026-11-01  # 日付を偽装してドライラン
 | `--notify` | `stdout`（既定）\| `slack`。`slack` は環境変数 `SLACK_WEBHOOK_URL` を読む |
 | `--days` | 先読みする日数（既定: 7） |
 | `--today` | 今日の日付を上書き（ドライラン用） |
+| `--config` | root 設定のパス（既定: `ichiza.yaml`） |
 
 期限超過と期限接近（`--days` 日以内）のタスクをイベントごとにまとめて通知します。
 
