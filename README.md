@@ -2,8 +2,8 @@
 
 Official documentation site for the **ichiza（一座）** family:
 
-- [`gr1m0h/ichiza`](https://github.com/gr1m0h/ichiza) — Community event operations as Code. CLI + composite actions for meetup operations (new, remind, registry, watch).
-- [`gr1m0h/ichiza-starter`](https://github.com/gr1m0h/ichiza-starter) — Template repository communities clone to get a pre-wired operations repo.
+- [`gr1m0h/ichiza`](https://github.com/gr1m0h/ichiza) — Technical meetup operations as Code: CLI, composite actions, and the optional Hono + Cloudflare Workers web cockpit.
+- [`gr1m0h/ichiza-starter`](https://github.com/gr1m0h/ichiza-starter) — Pre-wired operations repository built around one Dashboard Issue per event.
 
 Published at **<https://ichiza.grimoh.net>**.
 

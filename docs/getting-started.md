@@ -2,18 +2,16 @@
 sidebar_position: 2
 title: Getting Started
 ---
-
 # Getting Started
 
-運営リポジトリの作成から、最初のイベント作成まで。
+運営リポジトリを作り、最初のイベントを 1 件の Dashboard Issue として開始します。
 
 ## 0. 必要なもの
 
-- GitHub アカウント（private リポジトリの無料枠でも十分）
-- Slack の Incoming Webhook URL — 期限リマインドの通知先
-  （[作り方](https://api.slack.com/messaging/webhooks)。後から設定しても OK）
-- （任意）connpass API キー — 申込数ウォッチ（`watch`）を使う場合のみ。
-  [利用申請](https://help.connpass.com/api/)で発行（コミュニティ・個人は無償、審査あり）
+- GitHub アカウント（private リポジトリでも利用可能）
+- （任意）Slack Incoming Webhook URL — 期限リマインドを使う場合
+- （任意）connpass API キー — 申込数ウォッチを使う場合
+- （任意）Cloudflare アカウント — Web コックピットを使う場合
 
 ## 1. 運営リポジトリを作る
 
@@ -23,36 +21,34 @@ title: Getting Started
 gh repo create <owner>/<repo> --template gr1m0h/ichiza-starter --private --clone
 ```
 
-**private 推奨**: タスク Issue に会場の入館情報や登壇者の連絡先が載ることがあるためです。
+**private 推奨**: Dashboard Issue に会場の入館情報や登壇者の連絡先が載ることがあるためです。
 
-既存のリポジトリを運営リポジトリにする場合は、starter の中身
-（`.github/workflows/` / `ichiza.yaml` / `templates/`）を直接コピーしてください。
+既存リポジトリへ導入する場合は、starter の `.github/workflows/`、`ichiza.yaml`、
+`templates/` をコピーします。
 
-## 2. 前提条件を潰す
+## 2. GitHub Actions を設定する
 
-### 2-1. Actions の PR 作成許可（推奨）
+### 2-1. PR 作成許可
 
 Settings → Actions → General → Workflow permissions で
-**「Allow GitHub Actions to create and approve pull requests」を ON** にします
-（個人アカウントは既定で不許可）。
+**Allow GitHub Actions to create and approve pull requests** を有効にします。
 
 ```bash
 gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow \
     -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true
 ```
 
-:::note 忘れてもイベント作成は失敗しません
+:::note 設定前でもデータは失われない
 
-OFF のままでも workflow は完走し、PR の代わりに job summary へ
-手動作成リンク（タイトル・本文入力済み）が表示されます。恒久対応はこの権限設定です。
+無効のままでもイベント作成は完走し、job summary にタイトルと本文が入力済みの
+PR 作成リンクを表示します。
 
 :::
 
-### 2-2. Slack Webhook
+### 2-2. Slack Webhook（任意）
 
-Slack App の Incoming Webhook で URL を発行し、
-Settings → Secrets and variables → Actions に `SLACK_WEBHOOK_URL` として登録します
-（YAML に直書きしない）。毎朝 9:00 JST の cron で「今週の締切」digest が届くようになります。
+Slack 通知を使う場合は、Incoming Webhook URL を Actions secret
+`SLACK_WEBHOOK_URL` に登録します。未設定なら remind workflow はスキップします。
 
 ```bash
 gh secret set SLACK_WEBHOOK_URL --repo <owner>/<repo>
@@ -60,66 +56,81 @@ gh secret set SLACK_WEBHOOK_URL --repo <owner>/<repo>
 
 ### 2-3. connpass API キー（任意）
 
-申込数ウォッチを使う場合のみ、`CONNPASS_API_KEY` を Secrets に登録します。
-未設定の間は watch workflow が自動でスキップされるので、後回しで構いません。
+申込数ウォッチを使う場合だけ、`CONNPASS_API_KEY` を Actions secrets に登録します。
 
 ```bash
 gh secret set CONNPASS_API_KEY --repo <owner>/<repo>
 ```
 
-## 3. コミュニティ仕様に設定する
+## 3. コミュニティ仕様を設定する
 
-`ichiza.yaml`（既定値）と `templates/lifecycle.yaml`（タスク定義）を編集します。
-最小構成のままでも動くので、まずはそのまま進めても構いません。
+`ichiza.yaml` と `templates/lifecycle.yaml` を編集します。
 
-- `defaults.mode`（開催形態）・`defaults.venue`（会場）・`defaults.roles`（運営役割）、
-  hybrid / online で開催するなら `defaults.streaming` を見直す
-- 設定キーの一覧は [設定リファレンス](./ichiza/configuration.md)
-- タスク定義の書き方は [Lifecycle テンプレート](./ichiza/lifecycle.md)
-- フル構成の実例は本体リポジトリの [`examples/meetup/`](https://github.com/gr1m0h/ichiza/tree/main/examples/meetup)
+- `timezone` — 期限計算に使うタイムゾーン
+- `members` — GitHub ユーザー名、メールアドレス、Slack User ID の対応
+- `defaults` — 開催形態、会場、運営役割、配信設定
+- lifecycle の `id` — 各タスクに必須の、イベントをまたいで安定する識別子
+
+```yaml
+timezone: Asia/Tokyo
+
+members:
+  - github: octocat
+    email: octocat@example.com
+    slack_user_id: U0123456789
+```
+
+`members` は担当者の照合、Slack メンション、Web を使える運営者の許可リストに使います。
+設定一覧は [設定リファレンス](./ichiza/configuration.md)、タスク定義は
+[Lifecycle テンプレート](./ichiza/lifecycle.md)を参照してください。
 
 :::caution 既定値はイベント作成時にコピーされる
 
-`ichiza.yaml` の既定値は**イベント作成時に雛形へコピーされる**ため、作成後に変えても
-既存イベントには反映されません（個別の修正は `events/<slug>/event.yaml` を直接編集）。
+`ichiza.yaml` の既定値を後から変えても、作成済みイベントには反映されません。
+既存イベントは `events/<slug>/event.yaml` と `tasks.yaml` をPRで更新します。
+mainへのマージ後、`ichiza-dashboard.yml` がtask IDごとの完了状態とNotesを保持して
+Dashboard Issueへ自動同期します。
 
 :::
 
 ## 4. 導通テスト
 
-Actions タブ → **ichiza new** → **Run workflow** をテスト値で実行します。
+Actions → **ichiza new** → **Run workflow** をテスト値で実行します。
 
 | 入力 | 値の例 |
 | --- | --- |
 | slug | `test-0` |
 | title | 導通テスト |
-| date | 2〜3 ヶ月先の日付 |
+| date | 2〜3 か月先の日付 |
 | mode | `hybrid` |
 
-**期待結果**:
+期待結果は次の3点です。
 
-- `ichiza/new-test-0` ブランチの PR（`event.yaml` + `tasks.yaml`）
-- マイルストーン + 開催日から逆算した期限つき Issues 群（ラベルは自動作成されます）
-- job summary に connpass にそのまま貼れる募集ページ本文
+- `ichiza/new-test-0` ブランチの PR（`event.yaml` と `tasks.yaml`）
+- イベント情報と期限つきタスクをまとめた Dashboard Issue 1 件
+- job summary に connpass へ貼り付けられる募集ページ本文
 
-確認できたら PR をクローズし、ブランチ・Issues・マイルストーンを掃除します。
-失敗した場合は手順 2 の Secrets を再確認してください。
+Dashboard の最上位チェックボックスを操作し、すべて完了すると Issue が閉じること、
+1 件を未完了に戻すと再度開くことも確認できます。テスト後は PR、ブランチ、
+Dashboard Issue を削除またはクローズします。
 
 ## 5. 最初のイベントを作成する
 
-:::caution 開催日は「作成日 + 5 週間以上先」に置く
+:::caution 開催日は「作成日 + 5 週間以上先」を推奨
 
-同梱 lifecycle の最長オフセットは `-35d`（会場確定・確保）。
-それより近い日付で作成すると、生成された時点で期限切れのタスクが並びます。
+同梱 lifecycle の最長オフセットより近い日付では、作成時点から期限超過になるタスクがあります。
 
 :::
 
-1. Run workflow で本番の slug / title / date を入力して実行
-2. 生成された PR の `event.yaml` に**会場名・タイムテーブル・役割分担を記入**して
-   マージ — 以降これが SSoT
-3. job summary の募集ページ本文を connpass の「コピーして新規作成」→ 本文にペーストして公開し、
-   `event.yaml` に `connpass_url` を追記（申込数ウォッチの対象になります）
-4. マージ後はマイルストーンビューが「このイベントのやること一覧」になる
+1. **ichiza new** へ本番の slug、title、date、mode を入力して実行
+2. PR の `event.yaml` に会場、タイムテーブル、役割分担を記入してマージ
+3. job summary の本文を connpass へ貼り付け、公開後に `connpass_url` を追記
+4. Dashboard Issue のチェックボックスを日々更新
+5. GitHub Projects を使う場合は、この Dashboard Issue をイベントカードとして追加
 
-あとは毎朝の Slack リマインドと Issue の消化だけで開催日を迎えられます。
-続きは [運営サイクルガイド](./operations.md) へ。
+`event.yaml` と `tasks.yaml` が定義の正本、Dashboard Issue が操作面です。
+Dashboardのタイトル・期限・担当・管理用HTML commentは直接変更せず、定義ファイルを更新します。
+続きは [運営サイクルガイド](./operations.md) へ進んでください。
+
+Web コックピットは基本運用を確認してから追加できます。導入手順は
+[ichiza-starter](./ichiza-starter.md#web-コックピット任意alpha)にあります。

@@ -2,73 +2,121 @@
 sidebar_position: 4
 title: ichiza-starter
 ---
-
 # ichiza-starter
 
-[ichiza-starter](https://github.com/gr1m0h/ichiza-starter) は、コミュニティが複製する
-**template repository** です。ここから作った運営リポジトリには、ichiza を動かすための
-配線がすべて済んでいて、イベント作成から当日までスマホの GitHub アプリだけでも回せます。
+[ichiza-starter](https://github.com/gr1m0h/ichiza-starter) は、技術勉強会の運営リポジトリを作る
+template repository です。イベント作成から Dashboard、Slack 通知、任意の Web デプロイまでの
+GitHub Actions と設定雛形を提供します。
 
 ```bash
 gh repo create <owner>/<repo> --template gr1m0h/ichiza-starter --private --clone
 ```
 
+## 責務の分け方
+
+- **ichiza** — CLI、composite actions、Hono + Cloudflare Workers の Web 実装
+- **ichiza-starter** — 各コミュニティが所有する設定、イベント、workflow
+- **運営リポジトリ** — `event.yaml`、`tasks.yaml`、Dashboard Issue を保持するデータの正本
+
+Web のコードを starter ごとに複製しないため、機能改善とセキュリティ修正は ichiza 本体へ集約されます。
+
 ## 中身
 
 ```text
-.github/workflows/ichiza-new.yml      # イベント作成（Run workflow ボタン）
-.github/workflows/ichiza-remind.yml   # 毎朝 09:00 JST の期限チェック（cron）
-.github/workflows/ichiza-registry.yml # 募集ページ本文の再生成（Run workflow ボタン）
-.github/workflows/ichiza-watch.yml    # 毎朝 09:00 JST の申込数ウォッチ（cron・要 CONNPASS_API_KEY）
-ichiza.yaml                           # コミュニティの既定値
-templates/lifecycle.yaml              # タスク雛形（複数可、--lifecycle で切替）
-templates/registry/                   # 募集ページ本文のテンプレート（page.md）
-events/                               # イベントごとの event.yaml + tasks.yaml
+.github/workflows/ichiza-new.yml       # イベント作成
+.github/workflows/ichiza-dashboard.yml # Dashboard Issue の状態同期
+.github/workflows/ichiza-remind.yml    # 期限リマインド
+.github/workflows/ichiza-registry.yml  # 募集ページ本文の再生成
+.github/workflows/ichiza-watch.yml     # connpass 申込数ウォッチ
+.github/workflows/ichiza-web.yml       # Web コックピットのデプロイ
+ichiza.yaml                            # 既定値、タイムゾーン、運営メンバー
+templates/lifecycle.yaml               # ID つきタスク雛形
+templates/registry/                    # 募集ページ本文テンプレート
+events/                                # イベント定義
 ```
 
-## ichiza-new.yml — イベント作成ボタン
+## ichiza-new.yml — イベント作成
 
-`workflow_dispatch` の入力フォーム（slug / title / date / mode）から
-`gr1m0h/ichiza/actions/new@v0` を呼び出します。実行すると:
+`workflow_dispatch` の入力から `gr1m0h/ichiza/actions/new@v0` を呼び出します。
 
-1. ichiza CLI をインストール（`actions/setup`）
-2. `ichiza new --issues` で `event.yaml` + `tasks.yaml` + マイルストーン +
-   期限つき GitHub Issues を生成（ラベルは自動作成）
-3. connpass にそのまま貼れる募集ページ本文を job summary に出力
-4. `ichiza/new-<スラグ>` ブランチに commit して PR を作成
+1. `event.yaml` と `tasks.yaml` を生成
+2. `ichiza new --dashboard` で Dashboard Issue を 1 件作成
+3. connpass へ貼り付けられる募集ページ本文を job summary に出力
+4. `ichiza/new-<slug>` ブランチへ commit し、PR を作成
 
-GitHub UI の **Run workflow ボタン**（スマホの GitHub アプリ含む）から実行できるので、
-共同運営者に CLI の知識は不要です。PR 作成許可が OFF でも失敗せず、
-job summary に手動作成リンク（タイトル・本文入力済み）が表示されます。
+Dashboard の最上位チェックボックスが完了状態の正本です。
+PR 作成許可がない場合も、job summary に手動作成リンクを表示します。
 
-## ichiza-remind.yml — 毎朝の期限チェック
+## ichiza-dashboard.yml — Dashboard の同期
 
-cron（`0 0 * * *` = 09:00 JST）で `gr1m0h/ichiza/actions/remind@v0` を実行し、
-期限超過 + 7 日以内のタスクを Slack に digest 通知します。close 済み Issue のタスクは
-対象外です。Secrets に `SLACK_WEBHOOK_URL` の登録が必要です
-（[Getting Started](./getting-started.md#2-2-slack-webhook)）。
-`workflow_dispatch` でも起動できるので、手動での動作確認も可能です。
+Dashboard Issue の本文編集と、mainへのevent/tasks定義変更の両方を処理します。
 
-## ichiza-registry.yml — 募集ページ本文の再生成
+- ichiza が管理する最上位チェックボックスだけを解析
+- 全件完了なら Issue を close
+- 未完了へ戻ったら Issue を reopen
+- mainへ定義がマージされたら全イベントを `dashboard sync` し、task IDごとの完了状態とNotesを保持
+- Issue 本文先頭の `ichiza-dashboard` marker で対象を識別
 
-Run workflow（slug を入力）で `event.yaml` から募集ページ本文を再生成し、
-job summary に出力します。登壇者やタイムテーブルを更新したら、公開済みの
-connpass ページの本文に**まるごと貼り直します**（connpass の編集は本文の全置換のため、
-差分追記より崩れません）。文面は `templates/registry/page.md` でカスタマイズできます。
+workflow には `issues: write` が必要です。
 
-## ichiza-watch.yml — 毎朝の申込数ウォッチ
+## ichiza-remind.yml — 期限リマインド
 
-cron（09:00 JST）で開催前イベントの申込数 / 定員充足率 / 補欠 / 受付状態を
-Slack へ通知します。対象は `event.yaml` に `connpass_url` があるイベント
-（募集ページ公開後に追記）。`CONNPASS_API_KEY` secret が未設定の間は自動でスキップされます。
+毎朝 09:00 JST に `gr1m0h/ichiza/actions/remind@v0` を実行し、Dashboard の
+期限超過と 7 日以内の未完了タスクを Slack へ通知します。担当者に
+`slack_user_id` があればメンションします。Webhook 未設定なら安全にスキップします。
 
-## 登壇者の追加 {#speakers}
+## ichiza-registry.yml / ichiza-watch.yml
 
-1. `events/<slug>/event.yaml` の `speakers:` に登壇者情報を追記
-   （形式は[設定リファレンス](./ichiza/configuration.md)を参照）
-2. **ichiza registry** を Run workflow で実行し、summary の本文を connpass に貼り直す
+- **registry** — `event.yaml` から募集ページ本文を再生成
+- **watch** — `connpass_url` がある開催前イベントの申込数、定員、補欠、受付状態を通知
+
+watch は `CONNPASS_API_KEY` 未設定ならスキップします。
+
+## Web コックピット（任意・alpha）
+
+`ichiza-web.yml` は ichiza 本体の Web ソースを使い、Cloudflare Workers へデプロイします。
+Web は GitHub Dashboard Issue の Viewer + 操作補助で、独自データベースを持ちません。
+
+利用できる画面は、開催日と進捗を持つイベント一覧、イベント詳細、My Page です。期限状態と担当タスクを確認し、
+Dashboard のチェックボックスを更新できます。
+
+### 必要な Secrets
+
+- `CLOUDFLARE_API_TOKEN` — Worker のデプロイ権限
+- `ICHIZA_GITHUB_TOKEN` — 対象リポジトリだけに限定した fine-grained PAT
+  - Issues: Read and write
+  - Metadata: Read-only
+  - Contents 権限は不要
+
+PAT は運営リポジトリ所有者または代表運営者が発行し、有効期限を設定します。
+これは alpha の簡易構成であり、正式版では GitHub App への移行を想定しています。
+
+### 必要な Variables
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `ICHIZA_WORKER_NAME`
+- `CF_ACCESS_TEAM_DOMAIN`
+- `CF_ACCESS_AUD`
+
+### 初回セットアップ
+
+1. `ichiza.yaml` の `members.email` に許可する運営者を登録
+2. Account ID、Worker 名、Cloudflare API token、GitHub PAT を登録
+3. Access 関連 Variables を空のまま **ichiza web** を一度実行
+4. Cloudflare の対象 Worker で **Protect this Worker behind Access** を有効化
+5. Access policy へ運営者のメールアドレスを登録
+6. team domain と Audience tag を Variables へ設定し、workflow を再実行
+
+Access 設定が不足している間、Worker は fail closed でアクセスを拒否します。
+無料の `workers.dev` URL を使えるため、カスタムドメインは必須ではありません。
+
+## 登壇者・募集ページの更新 {#speakers}
+
+1. `events/<slug>/event.yaml` の `speakers`、会場、タイムテーブルを更新
+2. **ichiza registry** を実行
+3. job summary の本文を connpass へ貼り直す
 
 ## バージョン追従
 
-workflows は `gr1m0h/ichiza/actions/*@v0` のタグ参照なので、本体側のリリース
-（パッチ → `v0` タグ付け替え）に運営リポジトリ側の変更なしで追従します。
+workflows は `gr1m0h/ichiza/actions/*@v0` を参照します。本体側が `v0` タグを更新すると、
+運営リポジトリは参照先を変えずに互換リリースへ追従します。

@@ -8,71 +8,111 @@ title: FAQ
 ## イベント作成 workflow は成功したのに PR がない
 
 Settings → Actions → General → Workflow permissions の
-**「Allow GitHub Actions to create and approve pull requests」が OFF** になっています。
-workflow は失敗せず、job summary に PR の手動作成リンク（タイトル・本文入力済み）が
-出ています。恒久対応は権限を ON にすることです
-（[Getting Started](./getting-started.md#2-1-actions-の-pr-作成許可推奨)）。
-
-## リマインドが来ない
-
-`SLACK_WEBHOOK_URL` secret を確認してください。対象タスクがゼロの日は通知なしです。
-
-## 申込数の通知が来ない
-
-`CONNPASS_API_KEY` secret と、対象イベントの `event.yaml` に `connpass_url` が
-入っているかを確認してください（watch の実行ログに状況が出ます）。
-公開中のイベントが 1 件もない間は、cron は動いていても Slack 通知は自動で休止します。
-
-## 生成された時点で期限切れのタスクが並ぶ
-
-開催日が近すぎます。同梱 lifecycle の最長オフセットは `-35d`（会場確定・確保）なので、
-**開催日はイベント作成日から 5 週間以上先**に置いてください。
-自分の lifecycle をカスタマイズしている場合は、その最長オフセットが基準です。
+**Allow GitHub Actions to create and approve pull requests** を有効にします。
+無効でも job summary に手動作成リンクが表示されます。
+[Getting Started](./getting-started.md#2-1-pr-作成許可)も参照してください。
 
 ## タスクの完了はどう表現する？
 
-**終わったタスクは Issue を閉じるだけ**です。remind が close 済み Issue を gh 経由で
-照合し、翌朝のリマインドから外れます。`tasks.yaml` は「何をいつまでに」の定義のみで
-完了状態を持ちません。
+Dashboard Issue の管理対象となる最上位チェックボックスをチェックします。
+タスク本文や Notes の入れ子チェックボックスは完了判定に含まれません。
 
-注意: Issue のタイトルを変更すると照合できなくなります。やらないと決めたタスクは、
-Issue を閉じるか `events/<slug>/tasks.yaml` の該当行を削除してコミットしてください。
+全タスクを完了すると Dashboard Issue は自動で閉じます。チェックを戻すと再度開きます。
+`tasks.yaml` は定義であり、完了状態は Dashboard が持ちます。
 
-## `invalid slug` で失敗する
+## Dashboard Issue が閉じない、または再度開かない
 
-slug は小文字英数字とハイフンのみです（例: `tokyo-1`）。
+- `ichiza-dashboard.yml` に `issues: write` があるか
+- Issue 本文の先頭に `ichiza-dashboard` marker があるか
+- 管理対象の開始・終了 marker と task metadata を削除していないか
+- workflow の実行ログで `dashboard reconcile` が成功しているか
+
+を確認してください。
+
+## リマインドが来ない
+
+`SLACK_WEBHOOK_URL`、Dashboard の未完了チェック、workflow の実行ログを確認します。
+期限超過または指定日数以内の未完了タスクがない日は通知しません。
+Webhook 未設定なら starter の workflow はスキップします。
+
+## 担当者へ Slack メンションされない
+
+lifecycle の `assignee` が `ichiza.yaml` の `members.github` と一致し、
+そのメンバーに `slack_user_id` があるか確認してください。
+
+## Web を利用できる運営者は誰？
+
+Cloudflare Access policy で許可され、かつ `ichiza.yaml` の `members.email` に
+一致する人だけです。片方だけに登録しても利用できません。
+
+## Web が 401 または 500 になる
+
+- 対象 Worker が Cloudflare Access で保護されているか
+- `CF_ACCESS_TEAM_DOMAIN` と `CF_ACCESS_AUD` が正しいか
+- 認証メールが `members.email` にあるか
+- 初回デプロイ後に Access Variables を設定して再デプロイしたか
+
+を確認します。設定不足時は fail closed で拒否します。
+
+## Web のチェック操作が 409 になる
+
+ページ表示後に GitHub 側の Issue が更新されています。Webが送信前に検出できた競合です。
+ページを再読み込みし、最新のチェック状態を確認してから再操作してください。
+
+この検査はbest effortです。GitHub APIは更新時の条件指定を提供しないため、
+送信前の確認と更新のごく短い間に行われた同時編集までは完全には防げません。
+
+## GitHub PAT は誰が発行する？
+
+alpha では、運営リポジトリの所有者または代表運営者が fine-grained PAT を発行します。
+対象はその運営リポジトリ 1 件、Issues は read/write、Metadata は read-only に限定し、
+有効期限を設定します。Contents 権限は不要です。
+
+個人用 PAT を複数人で使い回す運用ではなく、Worker の secret として保管します。
+正式版では GitHub App へ移行する想定です。
+
+## 申込数の通知が来ない
+
+`CONNPASS_API_KEY` と `event.yaml` の `connpass_url` を確認してください。
+公開中イベントがなければ cron は動いても Slack 通知を送りません。
+
+## 生成直後から期限超過になる
+
+開催日が lifecycle の最長マイナスオフセットより近いためです。
+同梱テンプレートの `-35d` なら、5週間以上前に作成します。
+
+## `invalid slug` または task ID のエラーになる
+
+slug と task ID は、小文字英数字で始まり、小文字英数字とハイフンだけを使います。
+task ID はイベント内で重複できず、省略もできません。
 
 ## 登壇者を追加したら募集ページはどう更新する？
 
-1. `events/<slug>/event.yaml` の `speakers:` に登壇者情報を追記
-2. Actions タブ → **ichiza registry** → Run workflow（slug を入力）
-3. summary に出た本文を、公開済みの connpass ページの本文に**まるごと貼り直す**
+1. `events/<slug>/event.yaml` の `speakers` を更新
+2. **ichiza registry** を実行
+3. job summary の本文で connpass の本文全体を置き換える
 
-タイムテーブルや会場の変更も同じ流れです（[運営サイクルガイド](./operations.md)）。
+タイムテーブルや会場の変更も同じ流れです。
 
-## 共同運営者に CLI のインストールは必要？
+## 共同運営者に CLI は必要？
 
-不要です。運営リポジトリの Write 権限があれば、
-**Run workflow ボタン（イベント作成）と Issue の消化**だけで運営に参加できます。
-スマホの GitHub アプリからも実行可能です。CLI は Actions とローカルで
-同じロジックを呼ぶための実装形態にすぎません。
+不要です。GitHub の Run workflow、Dashboard Issue、または任意の Web コックピットから
+運営できます。ローカル CLI は開発や手動実行に使います。
 
 ## 運営リポジトリは public でもいい？
 
-動作はしますが **private を推奨**します。タスク Issue に会場の入館情報や
-登壇者の連絡先といった非公開情報が載ることがあるためです。
+動作しますが private を推奨します。会場の入館情報や連絡先など、運営限定情報を
+Dashboard に書くことがあるためです。
 
 ## X の告知は自動投稿される？
 
-いいえ。`sns.x.mode: intent` は**半自動・無料**の方式で、remind の通知に
-X の投稿画面を開く intent URL（本文入り）が添付されます。投稿ボタンを押すのは人間です。
-API 経由の全自動投稿（`mode: api`）は未実装です。
+いいえ。`announce` ラベルのタスクに X intent URL を添える半自動方式です。
+投稿を確定するのは人間です。
 
 ## Roadmap {#roadmap}
 
-未実装の機能のみ載せています。
-
 | 項目 | 内容 |
 | --- | --- |
-| `ichiza draft` | 告知記事・開催記事・司会資料の下書き生成 |
-| `ichiza kpt` | アンケート集計 → KPT 下書き |
+| GitHub App | Web のリポジトリアクセスを個人 PAT から移行 |
+| `ichiza draft` | 告知記事、開催記事、司会資料の下書き生成 |
+| `ichiza kpt` | アンケート集計から KPT 下書きを生成 |

@@ -5,79 +5,84 @@ title: Lifecycle テンプレート
 
 # Lifecycle テンプレート
 
-タスクは**開催日からのオフセット**で定義します。`ichiza new` が開催日を受け取ると、
-テンプレートを逆算して期限つきの `tasks.yaml` と GitHub Issues に展開します。
+タスクは開催日からのオフセットで定義します。`ichiza new` が開催日を受け取ると、
+期限つきの `tasks.yaml` と Dashboard Issue のチェックリストへ展開します。
 
 ```yaml
 tasks:
-  - title: 会場確定・確保
+  - id: secure-venue
+    title: 会場確定・確保
     due: -35d
+    assignee: alice
     labels: [venue]
     modes: [onsite, hybrid]
     body: |
       確認項目:
       - [ ] 収容人数
       - [ ] Wi-Fi
-  - { title: イベントページ作成・公開, due: -30d, labels: [announce] }
-  - { title: お礼, due: 1d, labels: [followup] }
+  - { id: publish-page, title: イベントページ作成・公開, due: -30d, labels: [announce] }
+  - { id: thank-you, title: お礼, due: 1d, labels: [followup] }
 ```
 
-| フィールド | 説明 |
-| --- | --- |
-| `title` | タスク名。Issue は `【〜MM/DD】タスク名` の形式で作られる |
-| `due` | 開催日からのオフセット。`-30d`（30 日前）/ `-2w`（2 週間前）/ `0d`（当日）/ `3d`（3 日後）。`d` = 日、`w` = 週 |
-| `labels` | Issue に付くラベル。**`announce` は特別扱い**: リマインド通知に X の投稿画面を開くリンクが付く。リポジトリに存在しないラベルは Issue 作成時に自動作成される |
-| `modes` | 展開条件。指定した開催形態（`onsite` / `hybrid` / `online`）のときだけタスク化される。省略時は常に展開 |
-| `body` | Issue 本文（markdown・省略可）。当日チェックリストや確認項目を書いておくと Issue がそのまま作業手順書になる |
+| フィールド | 必須 | 説明 |
+| --- | --- | --- |
+| `id` | はい | イベント内で一意な識別子。小文字英数字とハイフン |
+| `title` | はい | Dashboard に表示するタスク名 |
+| `due` | はい | `-30d`、`-2w`、`0d`、`3d` 形式の開催日オフセット |
+| `assignee` | いいえ | 担当者の GitHub login。members と対応させる |
+| `labels` | いいえ | タスク分類。`announce` は remind に X intent URL を付ける |
+| `modes` | いいえ | `onsite` / `hybrid` / `online`。省略時は全 mode |
+| `body` | いいえ | タスク直下へ表示する手順や補足 |
 
-展開されたタスクは期限順にソートされ、1 イベント = 1 マイルストーンで Issues 化されます。
+`id` は Dashboard の更新と Web のチェック操作に使うため必須です。
+タイトルを変えても同じタスクとして扱えるよう、一度決めた ID は安定させてください。
 
-## 同梱テンプレート（最小構成）
+`body` 内のチェックボックスは作業手順として使えますが、タスクの完了判定には含まれません。
+完了状態は最上位の管理対象チェックボックスだけが持ちます。
+作成後のイベントでtask定義を変える場合は `events/<slug>/tasks.yaml` をPRで更新します。
+mainへのマージ後、`dashboard sync` が同じIDの完了状態とNotesを保持して再反映します。
 
-starter に同梱される `templates/lifecycle.yaml` は、コミュニティ非依存のニュートラルな最小構成です。
+## 同梱テンプレート
+
+starter のテンプレートは、次のように全タスクへ ID を持たせています。
 
 ```yaml
 tasks:
-  - { title: 会場確定・確保, due: -35d, labels: [venue], modes: [onsite, hybrid] }
-  - { title: イベントページ作成・公開, due: -30d, labels: [announce] }
-  - { title: 登壇者確定・掲載情報の依頼, due: -30d, labels: [speakers] }
-  - { title: SNS・コミュニティで告知, due: -21d, labels: [announce] }
-  - { title: 配信枠作成, due: -14d, labels: [streaming], modes: [hybrid, online] }
-  - { title: 配信リハーサル, due: -3d, labels: [streaming], modes: [hybrid, online] }
-  - { title: 参加者数の最終確認, due: -7d, labels: [program] }
-  - { title: 直前リマインド, due: -3d, labels: [announce] }
-  - { title: 設営・開催・撤収, due: 0d, labels: [ops], modes: [onsite, hybrid] }
-  - { title: 開催（配信オペレーション）, due: 0d, labels: [ops], modes: [online] }
-  - { title: お礼（登壇者・会場・参加者）, due: 1d, labels: [followup] }
-  - { title: アンケート収集, due: 3d, labels: [followup] }
-  - { title: 振り返り, due: 10d, labels: [followup] }
+  - { id: secure-venue, title: 会場確定・確保, due: -35d, labels: [venue], modes: [onsite, hybrid] }
+  - { id: publish-event-page, title: イベントページ作成・公開, due: -30d, labels: [announce] }
+  - { id: confirm-speakers, title: 登壇者確定・掲載情報の依頼, due: -30d, labels: [speakers] }
+  - { id: announce-event, title: SNS・コミュニティで告知, due: -21d, labels: [announce] }
+  - { id: create-stream, title: 配信枠作成, due: -14d, labels: [streaming], modes: [hybrid, online] }
+  - { id: check-attendees, title: 参加者数の最終確認, due: -7d, labels: [program] }
+  - { id: rehearse-stream, title: 配信リハーサル, due: -3d, labels: [streaming], modes: [hybrid, online] }
+  - { id: final-reminder, title: 直前リマインド, due: -3d, labels: [announce] }
+  - { id: run-onsite, title: 設営・開催・撤収, due: 0d, labels: [ops], modes: [onsite, hybrid] }
+  - { id: run-online, title: 開催（配信オペレーション）, due: 0d, labels: [ops], modes: [online] }
+  - { id: thank-participants, title: お礼（登壇者・会場・参加者）, due: 1d, labels: [followup] }
+  - { id: collect-survey, title: アンケート収集, due: 3d, labels: [followup] }
+  - { id: retrospective, title: 振り返り, due: 10d, labels: [followup] }
 ```
 
-:::caution イベント作成は最長オフセットより前に
+:::caution 最長オフセットより前に作成する
 
-このテンプレートの最長オフセットは `-35d` です。開催日がイベント作成日から 5 週間未満だと、
-生成された時点で期限切れのタスクが並びます。
-**最長オフセットがイベント作成の締切を決めます。**
+最長オフセットが `-35d` なら、開催日の5週間以上前にイベントを作るのが目安です。
+それより遅いと、生成時点で期限超過になるタスクがあります。
 
 :::
 
-## 用途別に複数置く
+## 用途別テンプレート
 
-lifecycle は設定（`ichiza.yaml`）ではなくイベント作成のたびに展開される**テンプレート**なので、
-`templates/` 配下に用途別に複数置けます（例: 通常回と LT 大会）。
-切り替えは `ichiza new --lifecycle templates/lt-night.yaml`。GitHub Actions では
-composite action（`actions/new`）に `lifecycle` input がありますが、starter の
-`ichiza-new.yml` はフォーム入力に含めていないため、使う場合は workflow に
-input を追加して `actions/new` へ渡してください。
+通常回、LT会、オンライン回などで `templates/` 配下に複数の lifecycle を置けます。
+CLI は `--lifecycle`、composite action は `lifecycle` input で切り替えます。
+starter のフォームから選ばせる場合は `ichiza-new.yml` に input を追加します。
 
-## テンプレートを育てる
+## 振り返りから育てる
 
-lifecycle テンプレートは運営リポジトリ側のファイルなので、**振り返りの結果を直接反映**できます。
+- 「会場確保は遅い」→ `due` を前倒し
+- 「担当が曖昧」→ `assignee` または役割分担を追加
+- 「毎回忘れる確認がある」→ 新しい ID のタスクを追加
+- 「手順に抜けがある」→ `body` を更新
+- 「次回企画へ接続したい」→ 次回イベント作成タスクを正のオフセットで追加
 
-- 「会場確保は `-35d` では遅い」→ `due: -45d` に変更
-- 当日の手順書を残したい → `body` にチェックリストを追加
-- 定期開催のサイクルを回したい → 「次回イベントの作成」タスク（例: `due: 105d` の
-  正のオフセット）を末尾に置くと、開催サイクル自体がリマインドに乗る
-
-変更は次回の `ichiza new` から自動で効きます。詳しくは
-[運営サイクルガイド](../operations.md#運用しながら機能を育てる) を参照してください。
+テンプレート変更は次回の `ichiza new` から効きます。詳しくは
+[運営サイクルガイド](../operations.md#運用しながら育てる)を参照してください。

@@ -24,7 +24,7 @@ function Hero() {
           <p className={styles.heroLead}>
             勉強会・ミートアップ運営の CLI & GitHub Actions
             プラットフォーム。イベント定義（event.yaml）から
-            告知・リマインド・タスク管理を派生させます。
+            1イベント1件のDashboard、告知、リマインドを派生させます。
           </p>
           <div className={styles.heroButtons}>
             <Link
@@ -55,7 +55,7 @@ mode: hybrid`}
             <code>ichiza new</code>
           </div>
           <div className={styles.previewLabel}>
-            開催日から逆算した期限つきタスク + Issues
+            開催日から逆算した1件のDashboard Issue
           </div>
           <CodeBlock language="text" className={styles.previewBlock}>
             {`2026-10-24  会場確定・確保
@@ -80,7 +80,7 @@ const products: ProductCard[] = [
     title: "ichiza",
     docsHref: "/docs/ichiza/overview",
     description:
-      "CLI + composite actions 本体。new / remind / registry / watch でイベント作成・催促・転記・申込数ウォッチを自動化。",
+      "CLI + composite actions + 任意のWebコックピット。Dashboard作成・同期、催促、転記、申込数ウォッチを自動化。",
   },
   {
     title: "ichiza-starter",
@@ -92,7 +92,7 @@ const products: ProductCard[] = [
     title: "運営サイクルガイド",
     docsHref: "/docs/operations",
     description:
-      "イベント作成 → 準備 → 当日 → 振り返りまで、毎朝のリマインドと Issue 消化で回す運用の型。",
+      "イベント作成 → 準備 → 当日 → 振り返りまで、毎朝のリマインドとDashboardのチェックで回す運用の型。",
   },
 ];
 
