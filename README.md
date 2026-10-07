@@ -2,8 +2,8 @@
 
 Official documentation site for the **ichiza（一座）** family:
 
-- [`gr1m0h/ichiza`](https://github.com/gr1m0h/ichiza) — Technical meetup operations as Code: CLI, composite actions, and the optional Hono + Cloudflare Workers web cockpit.
-- [`gr1m0h/ichiza-starter`](https://github.com/gr1m0h/ichiza-starter) — Pre-wired operations repository built around one Dashboard Issue per event.
+- [`gr1m0h/ichiza`](https://github.com/gr1m0h/ichiza) — A CLI and GitHub Actions for running technical meetups, with an optional Hono + Cloudflare Workers web interface.
+- [`gr1m0h/ichiza-starter`](https://github.com/gr1m0h/ichiza-starter) — A template repository that manages each event in a single Dashboard Issue.
 
 Published at **<https://ichiza.grimoh.net>**.
 

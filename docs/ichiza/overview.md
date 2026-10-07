@@ -6,22 +6,22 @@ title: 概要
 # 概要
 
 [ichiza](https://github.com/gr1m0h/ichiza) は、Go 製 CLI、GitHub composite actions、
-任意の Web コックピットからなる技術勉強会向けの運営基盤です。
+任意の Web コックピットを提供する、技術勉強会向けの運営ツールです。
 
 ## 設計の中心
 
 - **1 イベント = 1 Dashboard Issue**
 - **最上位チェックボックス = タスクの完了状態**
-- **event.yaml / tasks.yaml = イベントとタスク定義**
-- **GitHub = データの正本**
-- **Web = GitHub を見やすく操作する任意拡張**
+- **event.yaml / tasks.yaml = イベントとタスクの設定**
+- **GitHub = データの保存先**
+- **Web = GitHub 上のデータを表示・更新する任意の画面**
 
 タスクごとに Issue を作らないため、Issue 数と GitHub Projects のカード数を抑えられます。
 Projects では Dashboard Issue をイベント単位のカードとして扱えます。
 
 ## 配布モデル
 
-ichiza は CLI だけでなく、starter から導入する GitHub Actions プラットフォームです。
+ichiza は CLI のほか、starter から導入できる GitHub Actions を提供します。
 
 ```text
 gr1m0h/ichiza
@@ -68,12 +68,12 @@ Web は Hono + Cloudflare Workers の DB なし構成です。Cloudflare Access 
 `ichiza.yaml` の `members` を照合し、許可された運営者だけが利用できます。
 
 GitHub API から Dashboard Issue を読み、開催日つきのイベント一覧、イベント詳細、My Page を表示します。
-更新時は Issue の `updated_at` を照合し、古い画面からの更新を409にするbest-effortの競合検査を行います。
-GitHub APIの制約上、照合直後に発生した同時編集まで完全に排除するものではありません。
+更新前に Issue の `updated_at` を確認し、画面を表示したあとに変更されていた場合は 409 を返します。
+ただし、GitHub API の制約上、確認してから更新するまでの間に行われた同時編集は検出できません。
 
 ## セキュリティ
 
 - composite actions の入力はシェルへ直接展開せず、環境変数経由で渡す
 - slug と task ID は小文字英数字・ハイフンへ制限する
-- Web は Access 設定や許可メンバーが不足している場合に fail closed とする
-- alpha の GitHub PAT は対象リポジトリ 1 件、Issues read/write、Metadata read-only に限定する
+- Web は Access 設定や許可メンバーが不足している場合、アクセスを許可しない
+- alpha 版の GitHub PAT は対象リポジトリ 1 件、Issues read/write、Metadata read-only に限定する

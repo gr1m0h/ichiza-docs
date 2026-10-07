@@ -48,8 +48,8 @@ ichiza new --slug tokyo-3 --title "Your Meetup #3" --date 2026-11-28 --dashboard
 
 生成物は `events/<slug>/event.yaml` と `tasks.yaml` です。`--dashboard` を付けると、
 `ichiza:event` ラベルを持つ「`<イベント名> 運営Dashboard`」Issue も作ります。
-各タスクは期限順の最上位チェックボックスになり、task ID などの管理情報を
-HTML comment に保持します。管理 marker は削除しないでください。
+各タスクは期限順の最上位チェックボックスとして表示されます。task ID などは
+HTML コメントに記録されるため、このコメントは削除しないでください。
 
 ## ichiza remind
 
@@ -99,7 +99,8 @@ ichiza dashboard sync --slug tokyo-3
 同じ task ID のチェック状態と Notes は保持し、追加タスクは未完了、削除タスクは管理領域から除外します。
 同期後に close / reopen も再判定します。starter では main への定義変更時に自動実行されます。
 
-管理対象行のタイトル・期限・担当・HTML commentをIssue上で直接変更せず、定義ファイルをPRで更新してください。
+管理対象行のタイトル、期限、担当者、HTML コメントは Issue 上で直接変更せず、
+定義ファイルを PR で更新してください。
 
 ## ichiza web-config
 
@@ -109,7 +110,7 @@ ichiza web-config --config path/to/ichiza.yaml
 ```
 
 `timezone` と、`members` の `email` / `github` を JSON として標準出力します。
-Web デプロイ workflow が期限判定と許可リストを Worker へ安全に渡すためのコマンドで、
+Web デプロイ workflow が期限判定と許可リストを Worker へ渡すためのコマンドで、
 `slack_user_id` や secret は出力しません。
 
 ## ichiza registry

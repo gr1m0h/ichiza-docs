@@ -22,9 +22,9 @@ function Hero() {
           </Heading>
           <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
           <p className={styles.heroLead}>
-            勉強会・ミートアップ運営の CLI & GitHub Actions
-            プラットフォーム。イベント定義（event.yaml）から
-            1イベント1件のDashboard、告知、リマインドを派生させます。
+            技術勉強会の運営を GitHub で管理するための CLI と GitHub
+            Actions。イベントごとに 1 件の Dashboard Issue を作成し、
+            告知文の生成や期限の通知も行います。
           </p>
           <div className={styles.heroButtons}>
             <Link
@@ -43,7 +43,7 @@ function Hero() {
         </div>
         <div className={styles.heroPreview}>
           <div className={styles.previewLabel}>
-            Run workflow（開催日を入れるだけ）
+            Run workflow にイベント情報を入力
           </div>
           <CodeBlock language="yaml" className={styles.previewBlock}>
             {`slug: tokyo-3
@@ -55,7 +55,7 @@ mode: hybrid`}
             <code>ichiza new</code>
           </div>
           <div className={styles.previewLabel}>
-            開催日から逆算した1件のDashboard Issue
+            期限を設定した 1 件の Dashboard Issue を作成
           </div>
           <CodeBlock language="text" className={styles.previewBlock}>
             {`2026-10-24  会場確定・確保
@@ -80,19 +80,19 @@ const products: ProductCard[] = [
     title: "ichiza",
     docsHref: "/docs/ichiza/overview",
     description:
-      "CLI + composite actions + 任意のWebコックピット。Dashboard作成・同期、催促、転記、申込数ウォッチを自動化。",
+      "CLI、composite actions、任意の Web コックピットを提供。Dashboard の作成・更新、期限通知、募集文の生成、申込数の確認に対応。",
   },
   {
     title: "ichiza-starter",
     docsHref: "/docs/ichiza-starter",
     description:
-      "コミュニティが複製するテンプレートリポジトリ。workflows / ichiza.yaml / 募集ページテンプレートが配線済み。",
+      "運営リポジトリのテンプレート。workflows、ichiza.yaml、募集ページのテンプレートをあらかじめ用意。",
   },
   {
     title: "運営サイクルガイド",
     docsHref: "/docs/operations",
     description:
-      "イベント作成 → 準備 → 当日 → 振り返りまで、毎朝のリマインドとDashboardのチェックで回す運用の型。",
+      "イベント作成、事前準備、当日の進行、振り返りまでの手順を説明。",
   },
 ];
 
@@ -120,7 +120,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.title}
-      description="勉強会・ミートアップ運営を Code 化するワンオペ向けプラットフォーム。"
+      description="技術勉強会の運営を GitHub で管理するためのツール。"
     >
       <Hero />
       <main>

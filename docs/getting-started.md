@@ -38,9 +38,9 @@ gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow \
     -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true
 ```
 
-:::note 設定前でもデータは失われない
+:::note PR 作成を許可していない場合
 
-無効のままでもイベント作成は完走し、job summary にタイトルと本文が入力済みの
+無効のままでもイベント作成は完了し、job summary にタイトルと本文が入力済みの
 PR 作成リンクを表示します。
 
 :::
@@ -87,9 +87,9 @@ members:
 :::caution 既定値はイベント作成時にコピーされる
 
 `ichiza.yaml` の既定値を後から変えても、作成済みイベントには反映されません。
-既存イベントは `events/<slug>/event.yaml` と `tasks.yaml` をPRで更新します。
-mainへのマージ後、`ichiza-dashboard.yml` がtask IDごとの完了状態とNotesを保持して
-Dashboard Issueへ自動同期します。
+既存イベントを変更する場合は、`events/<slug>/event.yaml` と `tasks.yaml` を PR で更新します。
+main へマージすると、`ichiza-dashboard.yml` が task ID ごとの完了状態と Notes を残したまま、
+Dashboard Issue を自動で更新します。
 
 :::
 
@@ -128,9 +128,9 @@ Dashboard Issue を削除またはクローズします。
 4. Dashboard Issue のチェックボックスを日々更新
 5. GitHub Projects を使う場合は、この Dashboard Issue をイベントカードとして追加
 
-`event.yaml` と `tasks.yaml` が定義の正本、Dashboard Issue が操作面です。
-Dashboardのタイトル・期限・担当・管理用HTML commentは直接変更せず、定義ファイルを更新します。
+イベントの設定は `event.yaml` と `tasks.yaml` で管理し、日々の進捗は Dashboard Issue で更新します。
+Dashboard のタイトル、期限、担当者、管理用 HTML コメントは直接変更せず、定義ファイルを更新してください。
 続きは [運営サイクルガイド](./operations.md) へ進んでください。
 
-Web コックピットは基本運用を確認してから追加できます。導入手順は
+Web コックピットは、基本的な運用を確認したあとからでも追加できます。導入手順は
 [ichiza-starter](./ichiza-starter.md#web-コックピット任意alpha)にあります。

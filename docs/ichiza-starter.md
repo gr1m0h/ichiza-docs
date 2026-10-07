@@ -4,9 +4,9 @@ title: ichiza-starter
 ---
 # ichiza-starter
 
-[ichiza-starter](https://github.com/gr1m0h/ichiza-starter) は、技術勉強会の運営リポジトリを作る
-template repository です。イベント作成から Dashboard、Slack 通知、任意の Web デプロイまでの
-GitHub Actions と設定雛形を提供します。
+[ichiza-starter](https://github.com/gr1m0h/ichiza-starter) は、技術勉強会の運営リポジトリを作るための
+template repository です。イベント作成、Dashboard、Slack 通知、任意の Web デプロイに必要な
+GitHub Actions と設定ファイルが含まれています。
 
 ```bash
 gh repo create <owner>/<repo> --template gr1m0h/ichiza-starter --private --clone
@@ -16,9 +16,9 @@ gh repo create <owner>/<repo> --template gr1m0h/ichiza-starter --private --clone
 
 - **ichiza** — CLI、composite actions、Hono + Cloudflare Workers の Web 実装
 - **ichiza-starter** — 各コミュニティが所有する設定、イベント、workflow
-- **運営リポジトリ** — `event.yaml`、`tasks.yaml`、Dashboard Issue を保持するデータの正本
+- **運営リポジトリ** — `event.yaml`、`tasks.yaml`、Dashboard Issue に運営データを保存
 
-Web のコードを starter ごとに複製しないため、機能改善とセキュリティ修正は ichiza 本体へ集約されます。
+Web のコードは starter に複製せず、ichiza 本体で管理します。
 
 ## 中身
 
@@ -44,17 +44,17 @@ events/                                # イベント定義
 3. connpass へ貼り付けられる募集ページ本文を job summary に出力
 4. `ichiza/new-<slug>` ブランチへ commit し、PR を作成
 
-Dashboard の最上位チェックボックスが完了状態の正本です。
+タスクの完了状態は、Dashboard の最上位チェックボックスで管理します。
 PR 作成許可がない場合も、job summary に手動作成リンクを表示します。
 
 ## ichiza-dashboard.yml — Dashboard の同期
 
-Dashboard Issue の本文編集と、mainへのevent/tasks定義変更の両方を処理します。
+Dashboard Issue の本文編集と、main へマージされたイベント定義の変更を処理します。
 
 - ichiza が管理する最上位チェックボックスだけを解析
 - 全件完了なら Issue を close
 - 未完了へ戻ったら Issue を reopen
-- mainへ定義がマージされたら全イベントを `dashboard sync` し、task IDごとの完了状態とNotesを保持
+- main へ定義がマージされたら全イベントを `dashboard sync` し、task ID ごとの完了状態と Notes を保持
 - Issue 本文先頭の `ichiza-dashboard` marker で対象を識別
 
 workflow には `issues: write` が必要です。
@@ -63,7 +63,7 @@ workflow には `issues: write` が必要です。
 
 毎朝 09:00 JST に `gr1m0h/ichiza/actions/remind@v0` を実行し、Dashboard の
 期限超過と 7 日以内の未完了タスクを Slack へ通知します。担当者に
-`slack_user_id` があればメンションします。Webhook 未設定なら安全にスキップします。
+`slack_user_id` があればメンションします。Webhook が未設定の場合は実行しません。
 
 ## ichiza-registry.yml / ichiza-watch.yml
 
@@ -74,8 +74,8 @@ watch は `CONNPASS_API_KEY` 未設定ならスキップします。
 
 ## Web コックピット（任意・alpha）
 
-`ichiza-web.yml` は ichiza 本体の Web ソースを使い、Cloudflare Workers へデプロイします。
-Web は GitHub Dashboard Issue の Viewer + 操作補助で、独自データベースを持ちません。
+`ichiza-web.yml` は ichiza 本体のソースコードを使い、Web アプリを Cloudflare Workers へデプロイします。
+データは GitHub の Dashboard Issue から取得するため、独自のデータベースは使いません。
 
 利用できる画面は、開催日と進捗を持つイベント一覧、イベント詳細、My Page です。期限状態と担当タスクを確認し、
 Dashboard のチェックボックスを更新できます。
@@ -89,7 +89,7 @@ Dashboard のチェックボックスを更新できます。
   - Contents 権限は不要
 
 PAT は運営リポジトリ所有者または代表運営者が発行し、有効期限を設定します。
-これは alpha の簡易構成であり、正式版では GitHub App への移行を想定しています。
+alpha 版では PAT を使用します。今後、GitHub App への移行を予定しています。
 
 ### 必要な Variables
 
@@ -107,7 +107,7 @@ PAT は運営リポジトリ所有者または代表運営者が発行し、有�
 5. Access policy へ運営者のメールアドレスを登録
 6. team domain と Audience tag を Variables へ設定し、workflow を再実行
 
-Access 設定が不足している間、Worker は fail closed でアクセスを拒否します。
+Access の設定が完了するまで、Worker へのアクセスは許可されません。
 無料の `workers.dev` URL を使えるため、カスタムドメインは必須ではありません。
 
 ## 登壇者・募集ページの更新 {#speakers}
@@ -116,7 +116,7 @@ Access 設定が不足している間、Worker は fail closed でアクセス�
 2. **ichiza registry** を実行
 3. job summary の本文を connpass へ貼り直す
 
-## バージョン追従
+## 更新方法
 
 workflows は `gr1m0h/ichiza/actions/*@v0` を参照します。本体側が `v0` タグを更新すると、
-運営リポジトリは参照先を変えずに互換リリースへ追従します。
+運営リポジトリの設定を変えずに更新内容が反映されます。

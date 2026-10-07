@@ -5,7 +5,7 @@ title: 設定リファレンス
 
 # 設定リファレンス
 
-コミュニティ固有の要件は `ichiza.yaml` と `templates/lifecycle.yaml` で表現します。
+コミュニティごとの設定は `ichiza.yaml` と `templates/lifecycle.yaml` に記述します。
 
 | ファイル | 役割 |
 | --- | --- |
@@ -87,13 +87,14 @@ GitHub login とメールアドレスは重複不可です。メールは読み�
 `slack_user_id` は `U` または `W` から始まる Slack member ID を指定します。
 
 Cloudflare Access policy と `members.email` の両方を通過した人だけが Web を利用できます。
-`ichiza web-config` は期限判定用の `timezone` と、Webに必要な `email` / `github` をJSON出力します。
+`ichiza web-config` は期限判定に使う `timezone` と、Web に必要な `email` / `github` を
+JSON で出力します。
 
 ## defaults
 
-`events/<slug>/event.yaml` の雛形へコピーされます。既定値の変更は作成済みイベントへ遡及しません。
-作成済みイベント自体を変更する場合はevent/tasksファイルをPRで更新し、mainへのマージ後に
-`dashboard sync` が完了状態とNotesを保持してDashboardへ反映します。
+`events/<slug>/event.yaml` の雛形へコピーされます。あとから既定値を変えても、作成済みの
+イベントには反映されません。作成済みイベントを変更する場合は event/tasks ファイルを PR で更新します。
+main へマージすると、`dashboard sync` が完了状態と Notes を残したまま Dashboard を更新します。
 
 | キー | 説明 |
 | --- | --- |

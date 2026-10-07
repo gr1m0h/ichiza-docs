@@ -52,24 +52,24 @@ Cloudflare Access policy で許可され、かつ `ichiza.yaml` の `members.ema
 - 認証メールが `members.email` にあるか
 - 初回デプロイ後に Access Variables を設定して再デプロイしたか
 
-を確認します。設定不足時は fail closed で拒否します。
+を確認します。必要な設定が足りない場合、アクセスは許可されません。
 
 ## Web のチェック操作が 409 になる
 
-ページ表示後に GitHub 側の Issue が更新されています。Webが送信前に検出できた競合です。
+ページを表示したあとに、GitHub 側で Issue が更新されています。
 ページを再読み込みし、最新のチェック状態を確認してから再操作してください。
 
-この検査はbest effortです。GitHub APIは更新時の条件指定を提供しないため、
-送信前の確認と更新のごく短い間に行われた同時編集までは完全には防げません。
+Web は送信前に更新の有無を確認します。ただし、GitHub API では更新時の条件を指定できないため、
+確認してから更新するまでのわずかな間に行われた同時編集は検出できません。
 
 ## GitHub PAT は誰が発行する？
 
-alpha では、運営リポジトリの所有者または代表運営者が fine-grained PAT を発行します。
+alpha 版では、運営リポジトリの所有者または代表者が fine-grained PAT を発行します。
 対象はその運営リポジトリ 1 件、Issues は read/write、Metadata は read-only に限定し、
 有効期限を設定します。Contents 権限は不要です。
 
 個人用 PAT を複数人で使い回す運用ではなく、Worker の secret として保管します。
-正式版では GitHub App へ移行する想定です。
+今後、GitHub App への移行を予定しています。
 
 ## 申込数の通知が来ない
 
