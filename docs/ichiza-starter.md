@@ -37,7 +37,7 @@ events/                                # イベント定義
 
 ## ichiza-new.yml — イベント作成
 
-`workflow_dispatch` の入力から `gr1m0h/ichiza/actions/new@v0` を呼び出します。
+`workflow_dispatch` の入力から `gr1m0h/ichiza/actions/new@v0.2.0` を呼び出します。
 
 1. `event.yaml` と `tasks.yaml` を生成
 2. `ichiza new --dashboard` で Dashboard Issue を 1 件作成
@@ -61,7 +61,7 @@ workflow には `issues: write` が必要です。
 
 ## ichiza-remind.yml — 期限リマインド
 
-毎朝 09:00 JST に `gr1m0h/ichiza/actions/remind@v0` を実行し、Dashboard の
+毎朝 09:00 JST に `gr1m0h/ichiza/actions/remind@v0.2.0` を実行し、Dashboard の
 期限超過と 7 日以内の未完了タスクを Slack へ通知します。担当者に
 `slack_user_id` があればメンションします。Webhook が未設定の場合は実行しません。
 
@@ -118,5 +118,5 @@ Access の設定が完了するまで、Worker へのアクセスは許可され
 
 ## 更新方法
 
-workflows は `gr1m0h/ichiza/actions/*@v0` を参照します。本体側が `v0` タグを更新すると、
-運営リポジトリの設定を変えずに更新内容が反映されます。
+workflows は公開済みリリース `gr1m0h/ichiza/actions/*@v0.2.0` を参照します。
+Renovate が新しいリリースへの更新 PR を作るため、内容を確認してから運営リポジトリへ反映できます。

@@ -45,8 +45,8 @@ gr1m0h/ichiza-starter
 └── templates/
 ```
 
-運営リポジトリは `gr1m0h/ichiza/actions/*@v0` を参照します。
-本体の互換リリースは `v0` タグの更新で配信されます。
+運営リポジトリは公開済みリリース（現在は `gr1m0h/ichiza/actions/*@v0.2.0`）を参照します。
+新しいリリースは Renovate の更新 PR を確認して取り込みます。
 
 ## CLI 単体で使う
 
