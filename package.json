@@ -12,7 +12,8 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:security": "node --test tests/braces-security.test.cjs"
   },
   "dependencies": {
     "@docusaurus/core": "^3.6.3",
@@ -28,7 +29,8 @@
     "@docusaurus/tsconfig": "^3.6.3",
     "@docusaurus/types": "^3.6.3",
     "typescript": "~5.6.2",
-    "wrangler": "^4.119.0"
+    "wrangler": "^4.119.0",
+    "braces": "npm:@bleedingdev/braces@3.0.4"
   },
   "browserslist": {
     "production": [
@@ -43,6 +45,13 @@
     ]
   },
   "engines": {
-    "node": ">=18.0"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
+  },
+  "overrides": {
+    "postcss-selector-parser": "^7.1.6",
+    "serialize-javascript": "^7.0.5",
+    "tinypool": "^2.1.2",
+    "uuid": "^11.1.1",
+    "braces": "$braces"
   }
 }
