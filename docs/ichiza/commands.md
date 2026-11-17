@@ -7,8 +7,11 @@ title: コマンド
 
 ```text
 ichiza new       --slug <slug> --title <title> --date <YYYY-MM-DD>
-                 [--mode onsite|hybrid|online] [--lifecycle <path>] [--issues]
+                 [--mode onsite|hybrid|online] [--lifecycle <path>] [--dashboard]
 ichiza remind    [--notify stdout|slack] [--days 7] [--today <YYYY-MM-DD>]
+ichiza dashboard reconcile --issue <number>
+ichiza dashboard sync --slug <slug> [--config ichiza.yaml]
+ichiza web-config [--config ichiza.yaml]
 ichiza registry  --slug <slug>
 ichiza watch     [--notify stdout|slack] [--slug <slug>] [--today <YYYY-MM-DD>]
 ichiza help
@@ -16,111 +19,135 @@ ichiza help
 
 ## 早見表
 
-| コマンド | 使う瞬間 | やること |
+| コマンド | 使う場面 | やること |
 | --- | --- | --- |
-| `ichiza new` | イベント作成（開催 5 週間前） | 開催日から逆算した期限つきタスクを `event.yaml` + `tasks.yaml` + GitHub Issues（マイルストーン付き）として一括生成 |
-| `ichiza remind` | 毎朝 9:00 JST（cron が自動実行） | 期限超過 + 7 日以内のタスクを Slack に digest 通知。close 済み Issue のタスクは対象外 |
-| `ichiza registry` | 募集ページの公開・更新時 | `event.yaml` から募集ページ本文を生成（connpass コピペ用） |
-| `ichiza watch` | 毎朝 9:00 JST（cron が自動実行） | 開催前イベントの申込数 / 補欠 / 受付状態を connpass API v2 で取得して通知 |
+| `ichiza new` | イベント作成時 | event.yaml、tasks.yaml、任意で Dashboard Issue を生成 |
+| `ichiza remind` | 毎朝 | Dashboard の未完了タスクから期限超過・期限接近を通知 |
+| `ichiza dashboard reconcile` | Dashboard 編集時 | 全件完了なら Issue を閉じ、未完了なら再度開く |
+| `ichiza dashboard sync` | event/tasks 定義のマージ時 | 完了状態と Notes を保持して Dashboard を再生成 |
+| `ichiza web-config` | Web デプロイ時 | timezone と許可メンバーの JSON を生成 |
+| `ichiza registry` | 募集ページ公開・更新時 | event.yaml から connpass 用本文を生成 |
+| `ichiza watch` | 毎朝 | connpass の申込数、補欠、受付状態を取得 |
 
 ## ichiza new
 
 ```bash
 ichiza new --slug tokyo-3 --title "Your Meetup #3" --date 2026-11-28
-ichiza new ... --issues   # gh CLI 経由で期限つき Issues も一括生成
+ichiza new --slug tokyo-3 --title "Your Meetup #3" --date 2026-11-28 --dashboard
 ```
 
 | フラグ | 説明 |
 | --- | --- |
-| `--slug` | イベントの識別子（例: `tokyo-3`。小文字英数字とハイフン）。**必須** |
-| `--title` | イベントタイトル。**必須** |
-| `--date` | 開催日 `YYYY-MM-DD`。**必須** |
-| `--mode` | `onsite` \| `hybrid` \| `online`（既定: `ichiza.yaml` の `defaults.mode`） |
-| `--lifecycle` | lifecycle テンプレートのパス（既定: `ichiza.yaml` の `lifecycle`） |
-| `--issues` | gh CLI 経由で GitHub Issues も作成 |
-| `--config` | root 設定のパス（既定: `ichiza.yaml`） |
+| `--slug` | イベント識別子。小文字英数字とハイフン。必須 |
+| `--title` | イベントタイトル。必須 |
+| `--date` | 開催日 `YYYY-MM-DD`。必須 |
+| `--mode` | `onsite` / `hybrid` / `online` |
+| `--lifecycle` | lifecycle テンプレートのパス |
+| `--dashboard` | `gh` CLI で Dashboard Issue を 1 件作成 |
+| `--config` | root 設定のパス。既定は `ichiza.yaml` |
 
-**生成物**:
-
-- `events/<スラグ>/event.yaml` — イベント定義の雛形。開催形態・役割・会場・配信設定の既定値は
-  `ichiza.yaml` の `defaults` から埋まる
-- `events/<スラグ>/tasks.yaml` — lifecycle テンプレートから逆算した期限つきタスク
-- （`--issues`）マイルストーン + 期限つき GitHub Issues。
-  リポジトリに存在しないラベルは自動作成される
+生成物は `events/<slug>/event.yaml` と `tasks.yaml` です。`--dashboard` を付けると、
+`ichiza:event` ラベルを持つ「`<イベント名> 運営Dashboard`」Issue も作ります。
+各タスクは期限順の最上位チェックボックスとして表示されます。task ID などは
+HTML コメントに記録されるため、このコメントは削除しないでください。
 
 ## ichiza remind
 
 ```bash
-ichiza remind                     # stdout に表示
-ichiza remind --notify slack      # SLACK_WEBHOOK_URL に通知（cron 用）
-ichiza remind --today 2026-11-01  # 日付を偽装してドライラン
+ichiza remind
+ichiza remind --notify slack
+ichiza remind --today 2026-11-01
 ```
 
 | フラグ | 説明 |
 | --- | --- |
-| `--notify` | `stdout`（既定）\| `slack`。`slack` は環境変数 `SLACK_WEBHOOK_URL` を読む |
-| `--days` | 先読みする日数（既定: 7） |
-| `--today` | 今日の日付を上書き（ドライラン用） |
-| `--config` | root 設定のパス（既定: `ichiza.yaml`） |
+| `--notify` | `stdout`（既定）または `slack` |
+| `--days` | 先読み日数。既定は 7 |
+| `--today` | 今日の日付の上書き |
+| `--config` | root 設定のパス |
 
-期限超過と期限接近（`--days` 日以内）のタスクをイベントごとにまとめて通知します。
+`gh` CLI で Dashboard Issue を読み、未完了の期限超過・期限接近タスクをイベントごとにまとめます。
+Dashboard の取得に失敗した場合は、誤った通知を送らずエラーで停止します。
 
-- **完了状態は GitHub Issue の open / close が持ちます**。gh CLI 経由で close 済み Issue を
-  照合し、閉じたタスクはリマインドから外れます（Issue のタイトルを変更すると照合できなく
-  なります）。gh がない・照合に失敗した環境では警告を出して全タスクを表示します
-- **announce ラベルのタスクには X の投稿画面を開く intent URL**
-  （`https://x.com/intent/post?text=...`、タイトルとイベントページ URL 入り）が添付されるので、
-  通知からワンタップで告知ポストまで済みます
+担当者が `ichiza.yaml` の `members` にあり、`slack_user_id` が設定されていれば
+Slack でメンションします。announce ラベルのタスクには X intent URL を付けます。
+`--notify slack` では `SLACK_WEBHOOK_URL` が必要です。
+
+## ichiza dashboard reconcile
+
+```bash
+ichiza dashboard reconcile --issue 123
+```
+
+指定 Issue の管理対象チェックボックスを解析します。
+
+- 1 件以上の全タスクが完了 → `completed` reason で Issue を close
+- 1 件でも未完了 → Issue を open に保つ、または reopen
+- タスクが 0 件 → open のまま
+- Dashboard marker がない Issue → エラー
+
+`gh` CLI と Issue の read/write 権限が必要です。通常は
+`ichiza-dashboard.yml` が Issue 編集イベントから実行します。
+
+## ichiza dashboard sync
+
+```bash
+ichiza dashboard sync --slug tokyo-3
+```
+
+`events/<slug>/event.yaml` と `tasks.yaml` を Dashboard Issue へ再反映します。
+同じ task ID のチェック状態と Notes は保持し、追加タスクは未完了、削除タスクは管理領域から除外します。
+同期後に close / reopen も再判定します。starter では main への定義変更時に自動実行されます。
+
+管理対象行のタイトル、期限、担当者、HTML コメントは Issue 上で直接変更せず、
+定義ファイルを PR で更新してください。
+
+## ichiza web-config
+
+```bash
+ichiza web-config
+ichiza web-config --config path/to/ichiza.yaml
+```
+
+`timezone` と、`members` の `email` / `github` を JSON として標準出力します。
+Web デプロイ workflow が期限判定と許可リストを Worker へ渡すためのコマンドで、
+`slack_user_id` や secret は出力しません。
 
 ## ichiza registry
 
 ```bash
-ichiza registry --slug tokyo-3   # 募集ページ本文を stdout に生成
+ichiza registry --slug tokyo-3
 ```
+
+`event.yaml` から募集ページ本文を生成します。connpass には書き込み API がないため、
+生成した全文を connpass へ貼り付けます。登壇者や会場を変更した場合も再生成して
+公開済み本文を置き換えます。
 
 | フラグ | 説明 |
 | --- | --- |
-| `--slug` | 対象イベントのスラグ。**必須** |
-| `--config` | root 設定のパス（既定: `ichiza.yaml`） |
-
-`event.yaml`（SSoT）から募集ページ本文を組み立てます。connpass には書き込み API が
-ないため、「connpass の**コピーして新規作成** → 生成された本文をペースト → 公開」まで
-人間の作業を圧縮する設計です。登壇者を追加したときも全文を再生成して
-**公開済みページの本文へまるごと貼り直します**（connpass の編集は本文の全置換のため）。
-
-GitHub Actions では job summary に出力されます（イベント作成時の `actions/new` と、
-`event.yaml` 更新後の `actions/registry` の両方）。本文テンプレートは運営リポジトリ側の
-[`registry.templates`](./configuration.md#募集ページ本文テンプレートregistrytemplates) で
-カスタマイズできます。
+| `--slug` | 対象イベント。必須 |
+| `--config` | root 設定のパス |
 
 ## ichiza watch
 
 ```bash
-export CONNPASS_API_KEY=...      # connpass サポートへの申請制
-ichiza watch                     # stdout に表示
-ichiza watch --notify slack      # SLACK_WEBHOOK_URL に通知（cron 用）
-ichiza watch --slug tokyo-3      # 特定イベントのみ（開催済みも可）
+export CONNPASS_API_KEY=...
+ichiza watch
+ichiza watch --notify slack
+ichiza watch --slug tokyo-3
 ```
 
 | フラグ | 説明 |
 | --- | --- |
-| `--notify` | `stdout`（既定）\| `slack` |
-| `--slug` | 対象を 1 イベントに絞る（開催済みイベントも指定可） |
-| `--today` | 今日の日付を上書き（ドライラン用） |
-| `--config` | root 設定のパス（既定: `ichiza.yaml`） |
+| `--notify` | `stdout`（既定）または `slack` |
+| `--slug` | 対象を 1 イベントに限定 |
+| `--today` | 今日の日付の上書き |
+| `--config` | root 設定のパス |
 
-開催前イベントの申込数 / 定員（充足率）・補欠数・受付状態を connpass API v2
-（読み取り専用）で取得します。adapter は `ichiza.yaml` の `registry.type` で選択します
-（現状 `connpass` のみ）。
-
-- 対象は `events/*/event.yaml` のうち**開催日が今日以降**かつ `connpass_url` が
-  設定されているイベント
-- `connpass_url` 未設定のイベントは通知内で ⚠️ として報告されます
-  （静かに落とすと「全部見えている」ように誤読されるため）
-- **公開中のイベントが 1 件もない間は実質休止**: cron は動きますが Slack へは送らず、
-  実行ログにだけ状況を残します。`connpass_url` を追記した翌朝から自動で通知が始まります
+開催日が今日以降で `connpass_url` のあるイベントについて、connpass API v2 から
+申込数、定員、補欠、受付状態を取得します。`--slug` 指定時は開催済みも対象にできます。
+公開中イベントがなければ Slack 通知は送らず、実行ログだけを残します。
 
 ## Coming soon
 
-`draft`（告知記事・開催記事・司会資料の下書き）と `kpt`（アンケート集計 → KPT 下書き）は
-未実装です。[FAQ の Roadmap](../faq.md#roadmap) を参照してください。
+`draft` と `kpt` は未実装です。[FAQ の Roadmap](../faq.md#roadmap) を参照してください。
