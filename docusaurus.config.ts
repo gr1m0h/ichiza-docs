@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'ichiza',
   tagline: 'Community event operations as Code',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/logo.svg',
 
   url: 'https://ichiza.grimoh.net',
   baseUrl: '/',
