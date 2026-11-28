@@ -28,7 +28,7 @@
     "@docusaurus/module-type-aliases": "^3.6.3",
     "@docusaurus/tsconfig": "^3.6.3",
     "@docusaurus/types": "^3.6.3",
-    "typescript": "~5.9.0",
+    "typescript": "~7.0.0",
     "wrangler": "^4.131.0",
     "braces": "npm:@bleedingdev/braces@3.0.4"
   },
